@@ -3,7 +3,7 @@ use deluge_api::State as DelugeState;
 use flat_db::Hash;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Torrent {
     pub id: Hash<20>,
     pub label: String,
@@ -14,7 +14,7 @@ pub struct Torrent {
     pub total_remaining: u64,
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum State {
     Downloading,
     Seeding,
