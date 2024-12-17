@@ -6,15 +6,16 @@ pub struct Options {
     pub directory: PathBuf,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Client {
     pub id: String,
     pub software: Software,
     pub host: String,
+    pub username: Option<String>,
     pub password: String,
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Software {
     Deluge,
     QBittorrent,

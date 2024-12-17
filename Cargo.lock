@@ -830,9 +830,9 @@ dependencies = [
 
 [[package]]
 name = "miniz_oxide"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2d80299ef12ff69b16a84bb182e3b9df68b5a91574d3d4fa6e41b65deec4df1"
+checksum = "a2ef2593ffb6958c941575cee70c8e257438749971869c4ae5acf6f91a168a61"
 dependencies = [
  "adler2",
 ]
@@ -957,6 +957,23 @@ checksum = "6f42ea446cab60335f76979ec15e12619a2165b5ae2c12166bef27d283a9fadf"
 dependencies = [
  "idna",
  "psl-types",
+]
+
+[[package]]
+name = "qbittorrent_api"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c2d24846580962727353afb194bb57e7bb01e2b7138cdd8e71bfe84b28b588d"
+dependencies = [
+ "colored",
+ "log",
+ "reqwest",
+ "rogue_config",
+ "rogue_logging",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower",
 ]
 
 [[package]]
@@ -1552,6 +1569,7 @@ dependencies = [
  "deluge_api",
  "flat_db",
  "log",
+ "qbittorrent_api",
  "rogue_logging",
  "serde",
  "serde_yaml",

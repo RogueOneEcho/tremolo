@@ -1,25 +1,66 @@
 use crate::get_config;
-use crate::options::Options;
+use crate::options::{Client, Options, Software};
 use crate::Torrent;
 use colored::Colorize;
-use deluge_api::get_torrents::FilterOptions;
-use deluge_api::{DelugeClient, DelugeClientFactory, DelugeClientOptions};
+use deluge_api::get_torrents::FilterOptions as DelugeFilterOptions;
+use deluge_api::{DelugeClientFactory, DelugeClientOptions};
 use flat_db::{Hash, Table};
-use log::{info, warn};
+use log::info;
+use qbittorrent_api::get_torrents::FilterOptions as QBittorentFilterOptions;
+use qbittorrent_api::Status::Success;
+use qbittorrent_api::{QBittorrentClientFactory, QBittorrentClientOptions};
 use rogue_logging::Error;
+use std::collections::BTreeMap;
 use std::process::ExitCode;
 
 pub async fn pull_command(client_id: String) -> Result<ExitCode, Error> {
     let options = get_config()?;
-    let mut client = get_deluge_client(client_id, &options)?;
+    let client = get_client(client_id, &options)?;
+    let torrents = match client.software {
+        Software::Deluge => get_deluge_torrents(client).await?,
+        Software::QBittorrent => get_qbit_torrents(client).await?,
+    };
+    let db = Table::<20, 1, Torrent>::new(options.directory);
+    db.set_many(torrents, true).await?;
+    Ok(ExitCode::SUCCESS)
+}
+
+fn get_client(client_id: String, options: &Options) -> Result<Client, Error> {
+    options
+        .clients
+        .iter()
+        .find(|x| x.id == client_id)
+        .cloned()
+        .ok_or_else(|| Error {
+            action: "get client from config".to_owned(),
+            message: format!("no client matches: {client_id}"),
+            ..Error::default()
+        })
+}
+
+async fn get_deluge_torrents(client: Client) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
+    let client_options = DelugeClientOptions {
+        host: client.host.clone(),
+        password: client.password.clone(),
+        user_agent: None,
+        rate_limit_duration: None,
+        rate_limit_count: None,
+    };
+    let factory = DelugeClientFactory {
+        options: client_options,
+    };
+    let mut client = factory.create();
     let response = client.login().await?;
     if !response.get_result("pull torrents")? {
-        warn!("{} to login to Deluge API", "Failed".bold());
-        return Ok(ExitCode::FAILURE);
+        return Err(Error {
+            action: "login".to_owned(),
+            domain: Some("Deluge API".to_owned()),
+            ..Error::default()
+        });
     }
-    let filters = FilterOptions {
+    let filters = DelugeFilterOptions {
         label: Some(vec!["linux".to_owned()]),
-        ..FilterOptions::default()
+        ..DelugeFilterOptions::default()
     };
     let response = client.get_torrents(filters).await?;
     let torrents = response.get_result("get_torrents")?;
@@ -32,29 +73,44 @@ pub async fn pull_command(client_id: String) -> Result<ExitCode, Error> {
             (hash, torrent)
         })
         .collect();
-    let db = Table::<20, 1, Torrent>::new(options.directory);
-    db.set_many(torrents, true).await?;
-    Ok(ExitCode::SUCCESS)
+    Ok(torrents)
 }
 
-fn get_deluge_client(client_id: String, options: &Options) -> Result<DelugeClient, Error> {
-    let client = options.clients.iter().find(|x| x.id == client_id);
-    let Some(client) = client else {
-        return Err(Error {
-            action: "get client from config".to_owned(),
-            message: format!("no client matches: {client_id}"),
-            ..Error::default()
-        });
-    };
-    let client_options = DelugeClientOptions {
+async fn get_qbit_torrents(client: Client) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
+    let client_options = QBittorrentClientOptions {
         host: client.host.clone(),
+        username: client.username.clone().unwrap_or_default(),
         password: client.password.clone(),
         user_agent: None,
         rate_limit_duration: None,
         rate_limit_count: None,
     };
-    let factory = DelugeClientFactory {
+    let factory = QBittorrentClientFactory {
         options: client_options,
     };
-    Ok(factory.create())
+    let mut client = factory.create();
+    let response = client.login().await?;
+    if response != Success {
+        return Err(Error {
+            action: "login".to_owned(),
+            domain: Some("qBittorrent API".to_owned()),
+            ..Error::default()
+        });
+    }
+    let filters = QBittorentFilterOptions {
+        // category: Some("linux".to_owned()),
+        ..QBittorentFilterOptions::default()
+    };
+    let response = client.get_torrents(filters).await?;
+    let torrents = response.get_result("get_torrents")?;
+    info!("{} {} torrents", "Pulled".bold(), torrents.len());
+    let torrents = torrents
+        .into_iter()
+        .map(|torrent| {
+            let hash = Hash::from_string(&torrent.hash).expect("hash should be valid");
+            let torrent = Torrent::from_qbittorrent(&torrent, hash);
+            (hash, torrent)
+        })
+        .collect();
+    Ok(torrents)
 }

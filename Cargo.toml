@@ -25,6 +25,7 @@ tokio = { version = "^1", features = ["full"] }
 flat_db = "0.1.0"
 deluge_api = "0.2.0"
 clap = { version = "4.5.23", features = ["derive"] }
+qbittorrent_api = "0.1.1"
 
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
