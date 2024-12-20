@@ -8,12 +8,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Torrent {
     pub id: Hash<20>,
-    pub label: String,
     pub name: String,
+    pub category: String,
+    pub state: State,
     pub progress: f64,
     pub save_path: String,
-    pub state: State,
-    pub total_remaining: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -33,24 +32,22 @@ impl Torrent {
     pub fn from_deluge(torrent: &DelugeTorrent, id: Hash<20>) -> Torrent {
         Torrent {
             id,
-            label: torrent.label.clone(),
             name: torrent.name.clone(),
+            category: torrent.label.clone(),
+            state: State::from_deluge(&torrent.state),
             progress: torrent.progress,
             save_path: torrent.save_path.clone(),
-            state: State::from_deluge(&torrent.state),
-            total_remaining: torrent.total_remaining,
         }
     }
 
     pub fn from_qbittorrent(torrent: &QBittorrentTorrent, id: Hash<20>) -> Torrent {
         Torrent {
             id,
-            label: torrent.category.clone(),
             name: torrent.name.clone(),
+            category: torrent.category.clone(),
+            state: State::from_qbittorrent(&torrent.state),
             progress: torrent.progress,
             save_path: torrent.save_path.clone(),
-            state: State::from_qbittorrent(&torrent.state),
-            total_remaining: torrent.amount_left,
         }
     }
 }
