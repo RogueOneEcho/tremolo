@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Options {
     pub clients: Vec<Client>,
-    pub directory: PathBuf,
+    pub cache: PathBuf,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -13,6 +13,7 @@ pub struct Client {
     pub host: String,
     pub username: Option<String>,
     pub password: String,
+    pub categories: Vec<String>
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

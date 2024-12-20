@@ -14,12 +14,12 @@ use rogue_logging::Error;
 use std::collections::BTreeMap;
 use std::process::ExitCode;
 
-pub async fn pull_command(client_id: String) -> Result<ExitCode, Error> {
+pub async fn pull_command(client_id: String, category: Option<String>) -> Result<ExitCode, Error> {
     let options = get_config()?;
     let client = get_client(client_id, &options)?;
     let torrents = match client.software {
-        Software::Deluge => get_deluge_torrents(&client).await?,
-        Software::QBittorrent => get_qbit_torrents(&client).await?,
+        Software::Deluge => get_deluge_torrents(&client, category).await?,
+        Software::QBittorrent => get_qbit_torrents(&client, category).await?,
     };
     let db = Database::new(&options, &client)?;
     db.torrents.set_many(torrents, true).await?;
@@ -39,7 +39,10 @@ fn get_client(client_id: String, options: &Options) -> Result<Client, Error> {
         })
 }
 
-async fn get_deluge_torrents(client: &Client) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
+async fn get_deluge_torrents(
+    client: &Client,
+    category: Option<String>,
+) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
     let client_options = DelugeClientOptions {
         host: client.host.clone(),
         password: client.password.clone(),
@@ -59,9 +62,13 @@ async fn get_deluge_torrents(client: &Client) -> Result<BTreeMap<Hash<20>, Torre
             ..Error::default()
         });
     }
-    let filters = DelugeFilterOptions {
-        // label: Some(vec!["linux".to_owned()]),
-        ..DelugeFilterOptions::default()
+    let filters = if let Some(category) = category {
+        DelugeFilterOptions {
+            label: Some(vec![category]),
+            ..DelugeFilterOptions::default()
+        }
+    } else {
+        DelugeFilterOptions::default()
     };
     let response = client.get_torrents(filters).await?;
     let torrents = response.get_result("get_torrents")?;
@@ -77,7 +84,10 @@ async fn get_deluge_torrents(client: &Client) -> Result<BTreeMap<Hash<20>, Torre
     Ok(torrents)
 }
 
-async fn get_qbit_torrents(client: &Client) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
+async fn get_qbit_torrents(
+    client: &Client,
+    category: Option<String>,
+) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
     let client_options = QBittorrentClientOptions {
         host: client.host.clone(),
         username: client.username.clone().unwrap_or_default(),
@@ -98,9 +108,13 @@ async fn get_qbit_torrents(client: &Client) -> Result<BTreeMap<Hash<20>, Torrent
             ..Error::default()
         });
     }
-    let filters = QBittorentFilterOptions {
-        // category: Some("linux".to_owned()),
-        ..QBittorentFilterOptions::default()
+    let filters = if let Some(category) = category {
+        QBittorentFilterOptions {
+            category: Some(category),
+            ..QBittorentFilterOptions::default()
+        }
+    } else {
+        QBittorentFilterOptions::default()
     };
     let response = client.get_torrents(filters).await?;
     let torrents = response.get_result("get_torrents")?;

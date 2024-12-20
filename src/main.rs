@@ -12,7 +12,7 @@ struct Cli {
 }
 #[derive(Subcommand)]
 enum Command {
-    Pull { client: String },
+    Pull { client: String, category: Option<String> },
 }
 
 #[tokio::main]
@@ -20,7 +20,7 @@ async fn main() -> ExitCode {
     let _logger = LoggerBuilder::new().create();
     let cli = Cli::try_parse().unwrap_or_else(|e| e.exit());
     let result = match cli.command {
-        Pull { client } => pull_command(client).await,
+        Pull { client, category } => pull_command(client, category).await,
     };
     result.unwrap_or_else(|e| {
         e.log();

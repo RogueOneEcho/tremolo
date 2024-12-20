@@ -10,20 +10,20 @@ pub struct Database {
 
 impl Database {
     pub fn new(options: &Options, client: &Client) -> Result<Self, Error> {
-        if !options.directory.exists() {
+        if !options.cache.exists() {
             return Err(Error {
                 action: "construct table".to_owned(),
-                message: format!("Directory does not exist: {}", options.directory.display()),
+                message: format!("Directory does not exist: {}", options.cache.display()),
                 ..Error::default()
             });
         }
-        let path = options.directory.join(client.id.clone());
+        let path = options.cache.join(client.id.clone());
         if !path.exists() {
             create_dir(&path).map_err(|e| Error {
                 action: "construct table".to_owned(),
                 message: format!(
                     "Could not create directory: {}\n{e}",
-                    options.directory.display()
+                    options.cache.display()
                 ),
                 ..Error::default()
             })?;
