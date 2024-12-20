@@ -12,7 +12,10 @@ struct Cli {
 }
 #[derive(Subcommand)]
 enum Command {
-    Pull { client: String, category: Option<String> },
+    Pull {
+        client: String,
+        category: Option<String>,
+    },
 }
 
 #[tokio::main]

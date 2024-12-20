@@ -13,7 +13,7 @@ pub struct Client {
     pub host: String,
     pub username: Option<String>,
     pub password: String,
-    pub categories: Vec<String>
+    pub categories: Vec<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
