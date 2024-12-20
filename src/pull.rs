@@ -6,7 +6,7 @@ use colored::Colorize;
 use deluge_api::get_torrents::FilterOptions as DelugeFilterOptions;
 use deluge_api::{DelugeClientFactory, DelugeClientOptions};
 use flat_db::Hash;
-use log::info;
+use log::{info, warn};
 use qbittorrent_api::get_torrents::FilterOptions as QBittorentFilterOptions;
 use qbittorrent_api::Status::Success;
 use qbittorrent_api::{QBittorrentClientFactory, QBittorrentClientOptions};
@@ -22,7 +22,21 @@ pub async fn pull_command(client_id: String, category: Option<String>) -> Result
         Software::QBittorrent => get_qbit_torrents(&client, category).await?,
     };
     let db = Database::new(&options, &client)?;
-    db.torrents.set_many(torrents, true).await?;
+    db.metadata.set_many(torrents.clone(), true).await?;
+    let files = torrents
+        .into_iter()
+        .filter_map(|(hash, torrent)| {
+            let path = client.torrents.join(format!("{}.torrent", hash.to_hex()));
+            if path.exists() {
+                Some((hash, path))
+            } else {
+                warn!("Skipping: {}", torrent.name);
+                warn!("File does not exist:\n{}", path.display());
+                None
+            }
+        })
+        .collect();
+    db.files.set_many(files).await?;
     Ok(ExitCode::SUCCESS)
 }
 

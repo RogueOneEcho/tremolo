@@ -22,7 +22,7 @@ rogue_logging = "^0.3"
 serde = { version = "^1.0", features = ["derive"] }
 serde_yaml = "0.9.34"
 tokio = { version = "^1", features = ["full"] }
-flat_db = "0.1.0"
+flat_db = "0.2.0-alpha.1"
 deluge_api = "0.2.0"
 clap = { version = "4.5.23", features = ["derive"] }
 qbittorrent_api = "0.1.1"

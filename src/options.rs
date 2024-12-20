@@ -13,6 +13,7 @@ pub struct Client {
     pub host: String,
     pub username: Option<String>,
     pub password: String,
+    pub torrents: PathBuf,
     pub categories: Vec<String>,
 }
 
