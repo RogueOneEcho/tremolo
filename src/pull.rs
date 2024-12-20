@@ -1,10 +1,11 @@
 use crate::get_config;
 use crate::options::{Client, Options, Software};
+use crate::Database;
 use crate::Torrent;
 use colored::Colorize;
 use deluge_api::get_torrents::FilterOptions as DelugeFilterOptions;
 use deluge_api::{DelugeClientFactory, DelugeClientOptions};
-use flat_db::{Hash, Table};
+use flat_db::Hash;
 use log::info;
 use qbittorrent_api::get_torrents::FilterOptions as QBittorentFilterOptions;
 use qbittorrent_api::Status::Success;
@@ -17,11 +18,11 @@ pub async fn pull_command(client_id: String) -> Result<ExitCode, Error> {
     let options = get_config()?;
     let client = get_client(client_id, &options)?;
     let torrents = match client.software {
-        Software::Deluge => get_deluge_torrents(client).await?,
-        Software::QBittorrent => get_qbit_torrents(client).await?,
+        Software::Deluge => get_deluge_torrents(&client).await?,
+        Software::QBittorrent => get_qbit_torrents(&client).await?,
     };
-    let db = Table::<20, 1, Torrent>::new(options.directory);
-    db.set_many(torrents, true).await?;
+    let db = Database::new(&options, &client)?;
+    db.torrents.set_many(torrents, true).await?;
     Ok(ExitCode::SUCCESS)
 }
 
@@ -38,7 +39,7 @@ fn get_client(client_id: String, options: &Options) -> Result<Client, Error> {
         })
 }
 
-async fn get_deluge_torrents(client: Client) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
+async fn get_deluge_torrents(client: &Client) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
     let client_options = DelugeClientOptions {
         host: client.host.clone(),
         password: client.password.clone(),
@@ -76,7 +77,7 @@ async fn get_deluge_torrents(client: Client) -> Result<BTreeMap<Hash<20>, Torren
     Ok(torrents)
 }
 
-async fn get_qbit_torrents(client: Client) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
+async fn get_qbit_torrents(client: &Client) -> Result<BTreeMap<Hash<20>, Torrent>, Error> {
     let client_options = QBittorrentClientOptions {
         host: client.host.clone(),
         username: client.username.clone().unwrap_or_default(),
