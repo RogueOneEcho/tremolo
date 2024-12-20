@@ -1,6 +1,7 @@
 /.idea
 /cache
 /target
+.envrc
 **/*.rs.bk
 *.pdb
 config.yml

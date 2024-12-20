@@ -1,0 +1,10 @@
+/.git
+/.github
+/.idea
+/cache
+/target
+.editorconfig
+Dockerfile
+*.md
+*.yaml
+*.yml
