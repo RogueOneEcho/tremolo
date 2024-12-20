@@ -60,7 +60,7 @@ async fn get_deluge_torrents(client: &Client) -> Result<BTreeMap<Hash<20>, Torre
         });
     }
     let filters = DelugeFilterOptions {
-        label: Some(vec!["linux".to_owned()]),
+        // label: Some(vec!["linux".to_owned()]),
         ..DelugeFilterOptions::default()
     };
     let response = client.get_torrents(filters).await?;
