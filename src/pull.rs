@@ -1,5 +1,5 @@
 use crate::get_config;
-use crate::options::{Client, Options, Software};
+use crate::options::{Client, Software};
 use crate::Database;
 use crate::Torrent;
 use colored::Colorize;
@@ -16,7 +16,7 @@ use std::process::ExitCode;
 
 pub async fn pull_command(client_id: String, category: Option<String>) -> Result<ExitCode, Error> {
     let options = get_config()?;
-    let client = get_client(client_id, &options)?;
+    let client = Client::get(client_id, &options)?;
     let torrents = match client.software {
         Software::Deluge => get_deluge_torrents(&client, category).await?,
         Software::QBittorrent => get_qbit_torrents(&client, category).await?,
@@ -38,19 +38,6 @@ pub async fn pull_command(client_id: String, category: Option<String>) -> Result
         .collect();
     db.files.set_many(files).await?;
     Ok(ExitCode::SUCCESS)
-}
-
-fn get_client(client_id: String, options: &Options) -> Result<Client, Error> {
-    options
-        .clients
-        .iter()
-        .find(|x| x.id == client_id)
-        .cloned()
-        .ok_or_else(|| Error {
-            action: "get client from config".to_owned(),
-            message: format!("no client matches: {client_id}"),
-            ..Error::default()
-        })
 }
 
 async fn get_deluge_torrents(

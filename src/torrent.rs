@@ -1,9 +1,11 @@
 use deluge_api::get_torrents::Torrent as DelugeTorrent;
 use deluge_api::State as DelugeState;
 use flat_db::Hash;
+use qbittorrent_api::add_torrent::Torrent as QBittorrentAddTorrent;
 use qbittorrent_api::get_torrents::State as QBittorrentState;
 use qbittorrent_api::get_torrents::Torrent as QBittorrentTorrent;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Torrent {
@@ -48,6 +50,15 @@ impl Torrent {
             state: State::from_qbittorrent(&torrent.state),
             progress: torrent.progress,
             save_path: torrent.save_path.clone(),
+        }
+    }
+
+    pub fn to_qbittorrent_add(self, torrent_file: PathBuf) -> QBittorrentAddTorrent {
+        QBittorrentAddTorrent {
+            path: torrent_file,
+            save_path: Some(self.save_path),
+            category: Some(self.category),
+            ..QBittorrentAddTorrent::default()
         }
     }
 }

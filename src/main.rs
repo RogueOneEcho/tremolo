@@ -1,8 +1,8 @@
-use crate::Command::Pull;
+use crate::Command::*;
 use clap::{Parser, Subcommand};
 use rogue_logging::LoggerBuilder;
 use std::process::ExitCode;
-use tremolo::pull_command;
+use tremolo::{pull_command, push_command};
 
 #[derive(Parser)]
 #[command(version, about)]
@@ -16,6 +16,10 @@ enum Command {
         client: String,
         category: Option<String>,
     },
+    Push {
+        client: String,
+        category: Option<String>,
+    },
 }
 
 #[tokio::main]
@@ -24,6 +28,7 @@ async fn main() -> ExitCode {
     let cli = Cli::try_parse().unwrap_or_else(|e| e.exit());
     let result = match cli.command {
         Pull { client, category } => pull_command(client, category).await,
+        Push { client, category } => push_command(client, category).await,
     };
     result.unwrap_or_else(|e| {
         e.log();

@@ -17,6 +17,21 @@ pub struct Client {
     pub categories: Vec<String>,
 }
 
+impl Client {
+    pub fn get(client_id: String, options: &Options) -> Result<Client, Error> {
+        options
+            .clients
+            .iter()
+            .find(|x| x.id == client_id)
+            .cloned()
+            .ok_or_else(|| Error {
+                action: "get client from config".to_owned(),
+                message: format!("no client matches: {client_id}"),
+                ..Error::default()
+            })
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Software {
     Deluge,
