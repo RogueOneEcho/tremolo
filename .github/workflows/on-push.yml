@@ -6,6 +6,7 @@ concurrency:
   cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
+  DOCKER_IMAGE: rogueoneecho/tremolo
 jobs:
 
   release:
@@ -178,3 +179,65 @@ jobs:
         --notes-file RELEASE-NOTES.md
         --target ${{ github.ref_name }}
         --prerelease
+
+  docker-build:
+    runs-on: ubuntu-latest
+    if: ${{ needs.release.outputs.version != ''}}
+    needs:
+    - release
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - uses: actions/cache@v4
+      with:
+        path: /tmp/.buildx-cache
+        key: buildx-${{ github.sha }}
+        restore-keys: |
+          buildx-
+
+    - run: echo $GH_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - run: docker buildx create --use
+
+    - run: >
+        docker buildx build .
+        --build-arg VERSION=${{ needs.release.outputs.version }}
+        --tag ghcr.io/${{ env.DOCKER_IMAGE }}:${{ needs.release.outputs.version }}
+        --cache-from=type=local,src=/tmp/.buildx-cache
+        --cache-to=type=local,dest=/tmp/.buildx-cache-new,mode=max
+        --push
+
+    # Temp fix
+    # https://github.com/docker/build-push-action/issues/252
+    # https://github.com/moby/buildkit/issues/1896
+    - run: rm -rf /tmp/.buildx-cache
+    - run: mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  docker-release:
+    runs-on: ubuntu-latest
+    needs:
+    - release
+    - cargo-build
+    - docker-build
+    steps:
+
+    - run: echo $GH_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - run: docker pull ghcr.io/${{ env.DOCKER_IMAGE }}:${{ needs.release.outputs.version }}
+
+    - run: docker tag ghcr.io/${{ env.DOCKER_IMAGE }}:${{ needs.release.outputs.version }} ghcr.io/${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
+      if: ${{ github.ref_name == 'alpha' }}
+
+    - run: docker push ghcr.io/${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}
+      if: ${{ github.ref_name == 'alpha' }}
+
+    - run: docker tag ghcr.io/${{ env.DOCKER_IMAGE }}:${{ needs.release.outputs.version }} ghcr.io/${{ env.DOCKER_IMAGE }}:latest
+      if: ${{ ! contains(needs.release.outputs.version, '-') }}
+
+    - run: docker push ghcr.io/${{ env.DOCKER_IMAGE }}:latest
+      if: ${{ ! contains(needs.release.outputs.version, '-') }}
