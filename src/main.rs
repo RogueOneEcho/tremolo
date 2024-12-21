@@ -2,7 +2,7 @@ use crate::Command::*;
 use clap::{Parser, Subcommand};
 use rogue_logging::LoggerBuilder;
 use std::process::ExitCode;
-use tremolo::{pull_command, push_command};
+use rogue_tremolo::{pull_command, push_command};
 
 #[derive(Parser)]
 #[command(version, about)]

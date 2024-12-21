@@ -15,6 +15,6 @@ RUN cargo build --release
 
 # Build final image with minimal dependencies
 FROM alpine:latest
-COPY --from=builder /app/target/release/tremolo /bin/tremolo
+COPY --from=builder /app/target/release/rogue_tremolo /bin/rogue_tremolo
 WORKDIR /
-ENTRYPOINT ["tremolo"]
+ENTRYPOINT ["rogue_tremolo"]
