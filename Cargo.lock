@@ -322,9 +322,9 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
 name = "flat_db"
-version = "0.2.0-alpha.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a09d93b96002a77a8fb756013f911a6468d7738d2bdac893e2db5b106deb9d0e"
+checksum = "99be8df1ebc1eae9ba40b70707ba877f3b355af63c47699109f5d5855d44d09c"
 dependencies = [
  "colored",
  "futures",
@@ -865,9 +865,9 @@ dependencies = [
 
 [[package]]
 name = "object"
-version = "0.36.5"
+version = "0.36.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aedf0a2d09c573ed1d8d85b30c119153926a2b36dce0ab28322c09a117a4683e"
+checksum = "08dde84f120894086dbb40c7a0257f76fdc72b6f52cdb56c2b5121b2f81b0c83"
 dependencies = [
  "memchr",
 ]
@@ -961,9 +961,9 @@ dependencies = [
 
 [[package]]
 name = "qbittorrent_api"
-version = "0.2.0-alpha.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56b21b2c142951aa6e46108d565445d06b98680459bf84306c4d636d1a78208f"
+checksum = "365de2e1f13c0f98c2fa44eaa4120584fab9174764ba8ca6919b1134208abbe6"
 dependencies = [
  "colored",
  "log",

@@ -72,8 +72,8 @@ async fn add_qbit_torrents(
     }
     let mut count = 0;
     for (path, torrent) in torrents {
-        let torrent = torrent.to_qbittorrent_add(path);
-        let response = client.add_torrent(torrent).await?;
+        let options = torrent.to_qbittorrent_add_options();
+        let response = client.add_torrent(options, path).await?;
         if response.result == Some(true) {
             count += 1;
         }

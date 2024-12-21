@@ -1,11 +1,10 @@
 use deluge_api::get_torrents::Torrent as DelugeTorrent;
 use deluge_api::State as DelugeState;
 use flat_db::Hash;
-use qbittorrent_api::add_torrent::Torrent as QBittorrentAddTorrent;
+use qbittorrent_api::add_torrent::AddTorrentOptions;
 use qbittorrent_api::get_torrents::State as QBittorrentState;
 use qbittorrent_api::get_torrents::Torrent as QBittorrentTorrent;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Torrent {
@@ -53,12 +52,13 @@ impl Torrent {
         }
     }
 
-    pub fn to_qbittorrent_add(self, torrent_file: PathBuf) -> QBittorrentAddTorrent {
-        QBittorrentAddTorrent {
-            path: torrent_file,
+    pub fn to_qbittorrent_add_options(self) -> AddTorrentOptions {
+        AddTorrentOptions {
             save_path: Some(self.save_path),
             category: Some(self.category),
-            ..QBittorrentAddTorrent::default()
+            skip_checking: Some(true),
+            paused: Some(self.state != State::Seeding),
+            ..AddTorrentOptions::default()
         }
     }
 }
@@ -82,6 +82,7 @@ impl State {
             QBittorrentState::MissingFiles => State::Error,
             QBittorrentState::Uploading => State::Seeding,
             QBittorrentState::PausedUP => State::Paused,
+            QBittorrentState::StoppedUP => State::Paused,
             QBittorrentState::QueuedUP => State::Queued,
             QBittorrentState::StalledUP => State::Seeding,
             QBittorrentState::CheckingUP => State::Checking,
@@ -90,6 +91,7 @@ impl State {
             QBittorrentState::Downloading => State::Downloading,
             QBittorrentState::MetaDL => State::Downloading,
             QBittorrentState::PausedDL => State::Paused,
+            QBittorrentState::StoppedDL => State::Paused,
             QBittorrentState::QueuedDL => State::Queued,
             QBittorrentState::StalledDL => State::Downloading,
             QBittorrentState::CheckingDL => State::Checking,
